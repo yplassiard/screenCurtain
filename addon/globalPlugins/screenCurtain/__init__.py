@@ -12,6 +12,7 @@
 """Screen curtain implementation based on the windows magnification API."""
 
 import globalPluginHandler
+import ui
 try:
 	from . import winMagnification
 except:
@@ -29,14 +30,29 @@ TRANSFORM_DEFAULT.transform[3][3] = 1.0
 TRANSFORM_DEFAULT.transform[4][4] = 1.0
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
+	screenCurtainEnabled = False
+
 
 	def __init__(self):
 		super(GlobalPlugin, self).__init__()
 		if (winVersion.winVersion.major, winVersion.winVersion.minor) < (6, 2):
 			raise RuntimeError("This add-on is only supported on Windows 8 and above")
 		winMagnification.Initialize()
-		winMagnification.SetFullscreenColorEffect(byref(TRANSFORM_BLACK))
 
 	def terminate(self):
-		winMagnification.SetFullscreenColorEffect(byref(TRANSFORM_BLACK))
+		winMagnification.SetFullscreenColorEffect(byref(TRANSFORM_DEFAULT))
 		winMagnification.Uninitialize()
+
+	def script_toggleScreenCurtain(self, gesture):
+		if self.screenCurtainEnabled is False:
+			winMagnification.SetFullscreenColorEffect(byref(TRANSFORM_BLACK))
+			self.screenCurtainEnabled = True
+			ui.message(_("screen curtain on"))
+		else:
+			winMagnification.SetFullscreenColorEffect(byref(TRANSFORM_DEFAULT))
+	       	        self.screenCurtainEnabled = False
+			ui.message(_("screen curtain off"))
+        script_toggleScreenCurtain.__doc__ = _("Toggles screen curtain on or off")
+	__gestures = {
+		"kb:nvda+control+f12": "toggleScreenCurtain",
+	}
